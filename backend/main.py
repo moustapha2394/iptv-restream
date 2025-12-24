@@ -34,9 +34,9 @@ app.add_middleware(
 )
 
 # Configuration Xtream depuis les variables d'environnement
-XTREAM_API_URL = os.environ.get("XTREAM_API_URL", "http://line.dino.ws:80")
-XTREAM_USERNAME = os.environ.get("XTREAM_USERNAME", "8c8e6d773d")
-XTREAM_PASSWORD = os.environ.get("XTREAM_PASSWORD", "2ff8d53b8f8c")
+XTREAM_API_URL = os.environ.get("XTREAM_API_URL", "http://your-xtream-server.com:port")
+XTREAM_USERNAME = os.environ.get("XTREAM_USERNAME", "your_username")
+XTREAM_PASSWORD = os.environ.get("XTREAM_PASSWORD", "your_password")
 
 # Configuration FFmpeg - Détection automatique du système
 import platform

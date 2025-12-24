@@ -11,7 +11,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 # Configuration JWT depuis les variables d'environnement
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "votre_cle_secrete_a_changer_en_production_2024")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "CHANGE_ME_generate_with_openssl_rand_hex_32")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
