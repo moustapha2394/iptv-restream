@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     # Option 1: Build local (développement)
