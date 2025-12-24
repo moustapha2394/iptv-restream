@@ -6,7 +6,7 @@ services:
     # build: ./backend
     
     # Option 2: Pull depuis GitHub Container Registry (production)
-    image: ghcr.io/VOTRE_USERNAME/iptv-restream/backend:main
+    image: ghcr.io/moustapha2394/iptv-restream/backend:main
     
     container_name: iptv_backend
     ports:
@@ -32,7 +32,7 @@ services:
     # build: ./frontend
     
     # Option 2: Pull depuis GitHub Container Registry (production)
-    image: ghcr.io/VOTRE_USERNAME/iptv-restream/frontend:main
+    image: ghcr.io/moustapha2394/iptv-restream/frontend:main
     
     container_name: iptv_frontend
     ports:
