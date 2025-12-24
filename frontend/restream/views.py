@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 import requests
 import json
+import os
 
-API_URL = "http://127.0.0.1:8002"
+# L'URL backend est récupérée depuis la variable d'environnement ou localhost par défaut
+API_URL = os.environ.get('BACKEND_URL', 'http://localhost:8002')
 
 def login_page(request):
     """Page de login"""

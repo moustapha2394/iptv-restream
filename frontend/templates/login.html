@@ -117,7 +117,8 @@
     </div>
 
     <script>
-        const API_URL = 'http://127.0.0.1:8002';
+        // Détection automatique de l'hôte (127.0.0.1 en local, 192.168.1.12 sur Proxmox)
+        const API_URL = `http://${window.location.hostname}:8002`;
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();

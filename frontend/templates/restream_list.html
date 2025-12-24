@@ -61,7 +61,7 @@
             <h4 style="margin: 0 0 10px 0; color: white;">🟢 Stream Actif</h4>
             <p style="margin: 0; font-size: 18px; color: white; font-weight: 600;" id="active-channel-name">-</p>
             <p style="margin: 10px 0 0 0; font-size: 14px; color: rgba(255,255,255,0.9);">
-                📡 URL Jellyfin/VLC: <code style="background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace;">http://127.0.0.1:8002/live.m3u8</code>
+                📡 URL Jellyfin/VLC: <code style="background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace;" id="jellyfin-url">http://<span id="server-ip"></span>:8002/live.m3u8</code>
             </p>
             <button class="btn-restream" onclick="stopCurrentStream()" style="background: #dc3545; margin-top: 15px;">
                 🛑 Arrêter le stream
@@ -117,12 +117,21 @@
     </div>
 
     <script>
-        const api = "http://127.0.0.1:8002";
+        // Détection automatique de l'hôte (127.0.0.1 en local, 192.168.1.12 sur Proxmox)
+        const api = `http://${window.location.hostname}:8002`;
         const categories = {{ categories_json|safe }};
         const FAVORITES_CAT_ID = 'favorites';
         let selectedCat = null;
         let currentChannels = [];
         let currentStreamUrl = "";
+        
+        // Mettre à jour l'IP affichée dans l'interface
+        document.addEventListener('DOMContentLoaded', () => {
+            const serverIpSpan = document.getElementById('server-ip');
+            if (serverIpSpan) {
+                serverIpSpan.textContent = window.location.hostname;
+            }
+        });
         
         // Authentification - récupérer le token depuis localStorage ou cookie
         function getAuthToken() {
@@ -447,7 +456,7 @@
                 alert(`✅ Stream démarré avec FFmpeg !\n\n` +
                       `Chaîne: ${channelName}\n\n` +
                       `📺 Regarder: http://127.0.0.1:8001/watch/\n` +
-                      `📡 Jellyfin/VLC: http://127.0.0.1:8002/live.m3u8\n\n` +
+                      `📡 Jellyfin/VLC: http://${window.location.hostname}:8002/live.m3u8\n\n` +
                       `Le stream est maintenant accessible !`);
                 
                 // Réinitialiser après 3 secondes

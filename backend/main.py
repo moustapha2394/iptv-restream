@@ -38,8 +38,14 @@ XTREAM_API_URL = os.environ.get("XTREAM_API_URL", "http://line.dino.ws:80")
 XTREAM_USERNAME = os.environ.get("XTREAM_USERNAME", "8c8e6d773d")
 XTREAM_PASSWORD = os.environ.get("XTREAM_PASSWORD", "2ff8d53b8f8c")
 
-# Configuration FFmpeg
-FFMPEG_PATH = r"C:\Users\mndiaye\AppData\Local\Temp\ffmpeg\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"
+# Configuration FFmpeg - Détection automatique du système
+import platform
+if platform.system() == "Windows":
+    FFMPEG_PATH = r"C:\Users\mndiaye\AppData\Local\Temp\ffmpeg\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"
+else:
+    # Sur Linux/Docker, FFmpeg est dans le PATH
+    FFMPEG_PATH = "ffmpeg"
+
 HLS_OUTPUT_DIR = Path("hls_output")
 HLS_OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -396,4 +402,5 @@ def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8002)
+    # Écouter sur 0.0.0.0 pour accepter les connexions externes (Proxmox)
+    uvicorn.run(app, host="0.0.0.0", port=8002)

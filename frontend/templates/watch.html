@@ -192,14 +192,14 @@
         // Surveiller les changements de chaîne
         function startChannelMonitoring() {
             checkInterval = setInterval(() => {
-                fetch('http://127.0.0.1:8002/stream_status')
+                fetch(`http://${window.location.hostname}:8002/stream_status`)
                     .then(res => res.json())
                     .then(data => {
                         // Si la chaîne a changé ou le stream s'est arrêté
                         if (!data.active) {
                             // Stream arrêté, rediriger vers l'admin
                             if (checkInterval) clearInterval(checkInterval);
-                            window.location.href = 'http://127.0.0.1:8001';
+                            window.location.href = `http://${window.location.hostname}:8001`;
                         } else if (data.channel_id !== currentChannelId) {
                             // Changement de chaîne détecté, recharger la page
                             console.log('Changement de chaîne détecté:', currentChannelId, '→', data.channel_id);
@@ -220,7 +220,7 @@
             
             controls.style.display = 'none';
             
-            const streamUrl = 'http://127.0.0.1:8002/internal_stream.m3u8';
+            const streamUrl = `http://${window.location.hostname}:8002/internal_stream.m3u8`;
             
             if (Hls.isSupported()) {
                 hls = new Hls({
