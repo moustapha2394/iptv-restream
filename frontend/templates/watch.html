@@ -160,7 +160,7 @@
         let checkInterval = null;
         
         // Vérifier le statut du stream
-        fetch('http://127.0.0.1:8002/stream_status')
+        fetch(`http://${window.location.hostname}:8002/stream_status`)
             .then(res => res.json())
             .then(data => {
                 loading.style.display = 'none';
