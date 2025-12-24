@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    # Option 1: Build depuis repo GitHub PUBLIC
+    build:
+      context: https://github.com/VOTRE_USERNAME/iptv-restream.git#main:backend
+    
+    # Option 2: Build depuis repo GitHub PRIVÉ (avec token)
+    # build:
+    #   context: https://TOKEN:x-oauth-basic@github.com/VOTRE_USERNAME/iptv-restream.git#main:backend
+    
+    container_name: iptv_backend
+    ports:
+      - "8002:8002"
+    environment:
+      # Configuration Xtream Codes - À MODIFIER AVEC TES IDENTIFIANTS
+      - XTREAM_API_URL=http://line.dino.ws:80
+      - XTREAM_USERNAME=8c8e6d773d
+      - XTREAM_PASSWORD=2ff8d53b8f8c
+      
+      # JWT Secret Key - Générer avec: openssl rand -hex 32
+      - JWT_SECRET_KEY=votre-secret-key-change-en-production-2024
+      
+      # Admin Password Hash - Par défaut: admin123
+      - ADMIN_PASSWORD_HASH=$$2b$$12$$Swx6tdNWLUJ8Q9yec8TnceVbeCrp7JP.bpbhZSXjagS8zt1Bhupyi
+    restart: unless-stopped
+    networks:
+      - iptv_network
+
+  frontend:
+    # Option 1: Build depuis repo GitHub PUBLIC
+    build:
+      context: https://github.com/VOTRE_USERNAME/iptv-restream.git#main:frontend
+    
+    # Option 2: Build depuis repo GitHub PRIVÉ (avec token)
+    # build:
+    #   context: https://TOKEN:x-oauth-basic@github.com/VOTRE_USERNAME/iptv-restream.git#main:frontend
+    
+    container_name: iptv_frontend
+    ports:
+      - "8001:8001"
+    environment:
+      - BACKEND_URL=http://backend:8002
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - iptv_network
+
+networks:
+  iptv_network:
+    driver: bridge

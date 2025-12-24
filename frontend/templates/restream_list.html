@@ -1,0 +1,534 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Restream Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet">
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <style>
+        body { background: #181c24; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .container { max-width: 1200px; margin: 40px auto; background: #232a36; border-radius: 12px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        h1 { text-align: center; margin-bottom: 30px; color: #2e8bff; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #1c2330; color: #fff; font-size: 14px; }
+        .search-box input:focus { outline: none; border-color: #2e8bff; }
+        .cat-list { background: #1c2330; border-radius: 8px; padding: 0; max-height: 500px; overflow-y: auto; }
+        .cat-list::-webkit-scrollbar { width: 8px; }
+        .cat-list::-webkit-scrollbar-thumb { background: #2e8bff; border-radius: 4px; }
+        .cat-item { cursor: pointer; padding: 12px 18px; border-bottom: 1px solid #333; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .cat-item:hover { background: #2a3340; }
+        .cat-item.selected { background: #2e8bff; color: #fff; }
+        .cat-item[data-cat="favorites"] { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #000; font-weight: 600; border-bottom: 2px solid #ff9800; }
+        .cat-item[data-cat="favorites"].selected { background: linear-gradient(135deg, #ffb300 0%, #ff6f00 100%); }
+        .cat-item[data-cat="favorites"]:hover { background: linear-gradient(135deg, #ffca28 0%, #ffa726 100%); }
+        .cat-count { background: #444; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .channels-panel { background: #1c2330; border-radius: 8px; min-height: 500px; max-height: 500px; overflow-y: auto; padding: 10px; }
+        .channels-panel::-webkit-scrollbar { width: 8px; }
+        .channels-panel::-webkit-scrollbar-thumb { background: #2e8bff; border-radius: 4px; }
+        .channel-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #333; transition: background 0.2s; }
+        .channel-row:hover { background: #2a3340; }
+        .channel-name { flex: 1; font-size: 14px; margin-right: 10px; }
+        .btn-favorite { background: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0 8px; transition: transform 0.2s; }
+        .btn-favorite:hover { transform: scale(1.2); }
+        .btn-favorite.active { filter: drop-shadow(0 0 3px gold); }
+        .filter-favorites { background: #2e8bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-bottom: 10px; font-weight: 600; transition: all 0.2s; }
+        .filter-favorites:hover { background: #1c5db6; }
+        .filter-favorites.active { background: #ffc107; color: #000; }
+        .btn-restream { background: #2e8bff; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .btn-restream:hover { background: #1c5db6; transform: translateY(-1px); }
+        .btn-restream:disabled { background: #555; cursor: not-allowed; }
+        .link-box { background: #1c2330; padding: 16px; border-radius: 8px; margin-top: 20px; word-break: break-all; border: 1px solid #2e8bff; display: flex; justify-content: space-between; align-items: center; }
+        .link-text { flex: 1; margin-right: 10px; font-family: monospace; font-size: 13px; }
+        .btn-copy { background: #28a745; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
+        .btn-copy:hover { background: #218838; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0;">📺 IPTV Restream Platform</h1>
+            <a href="/logout" class="btn-restream" style="background: #dc3545; padding: 10px 20px; text-decoration: none;">
+                🚪 Déconnexion
+            </a>
+        </div>
+        
+        <!-- Indicateur du stream actif -->
+        <div id="stream-status" style="display:none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
+            <h4 style="margin: 0 0 10px 0; color: white;">🟢 Stream Actif</h4>
+            <p style="margin: 0; font-size: 18px; color: white; font-weight: 600;" id="active-channel-name">-</p>
+            <p style="margin: 10px 0 0 0; font-size: 14px; color: rgba(255,255,255,0.9);">
+                📡 URL Jellyfin/VLC: <code style="background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; font-family: monospace;">http://127.0.0.1:8002/live.m3u8</code>
+            </p>
+            <button class="btn-restream" onclick="stopCurrentStream()" style="background: #dc3545; margin-top: 15px;">
+                🛑 Arrêter le stream
+            </button>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-md-4">
+                <div class="search-box">
+                    <input type="text" id="search-cat" placeholder="🔍 Rechercher une catégorie..." onkeyup="filterCategories()">
+                </div>
+                <div class="cat-list" id="cat-list">
+                    <!-- Catégorie Favoris (ajoutée dynamiquement en JS) -->
+                    {% for cat in categories %}
+                    <div class="cat-item" data-cat="{{ cat.category.category_id }}" data-name="{{ cat.category.category_name|lower }}">
+                        <span>{{ cat.category.category_name }}</span>
+                        <span class="cat-count">{{ cat.channels|length }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-12 col-md-8">
+                <div class="search-box">
+                    <input type="text" id="search-channel" placeholder="🔍 Rechercher une chaîne..." onkeyup="filterChannels()">
+                </div>
+                <div class="channels-panel" id="channels-panel">
+                    <div class="loading">Chargement des chaînes...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="link-container" style="display:none; margin-top: 20px;">
+            <h4 style="margin-bottom: 15px; color: #2e8bff;">📺 Lien de Streaming Généré</h4>
+            <div class="alert" style="background: #1c2330; padding: 20px; border-radius: 8px; border: 2px solid #2e8bff;">
+                <p style="margin-bottom: 10px; color: #aaa;">Utilisez ce lien dans votre lecteur préféré (VLC, MPV, etc.)</p>
+                <div id="restream-link" class="link-box" style="margin: 15px 0;">
+                    <span class="link-text" id="link-text" style="word-break: break-all;"></span>
+                    <button class="btn-copy" onclick="copyLink()">📋 Copier</button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn-restream" onclick="openInVLC()" style="flex: 1;">
+                        🎬 Ouvrir dans VLC
+                    </button>
+                    <button class="btn-restream" onclick="closeLink()" style="flex: 1; background: #dc3545;">
+                        ✖ Fermer
+                    </button>
+                </div>
+                <p style="margin-top: 15px; color: #888; font-size: 13px;">
+                    ⏰ Ce lien expire dans 24 heures
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = "http://127.0.0.1:8002";
+        const categories = {{ categories_json|safe }};
+        const FAVORITES_CAT_ID = 'favorites';
+        let selectedCat = null;
+        let currentChannels = [];
+        let currentStreamUrl = "";
+        
+        // Authentification - récupérer le token depuis localStorage ou cookie
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || '{{ access_token }}' || '';
+        }
+        
+        // Headers avec authentification
+        function getAuthHeaders() {
+            const token = getAuthToken();
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            };
+        }
+        
+        // Fetch avec authentification automatique
+        async function authFetch(url, options = {}) {
+            const token = getAuthToken();
+            
+            if (!options.headers) {
+                options.headers = {};
+            }
+            
+            // Ajouter le token si disponible
+            if (token && !options.headers['Authorization']) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const response = await fetch(url, options);
+            
+            // Si 401, rediriger vers login
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login';
+                throw new Error('Authentication required');
+            }
+            
+            return response;
+        }
+        
+        // Gestion des favoris (localStorage)
+        function getFavorites() {
+            const favs = localStorage.getItem('iptv_favorites');
+            return favs ? JSON.parse(favs) : [];
+        }
+        
+        function saveFavorites(favorites) {
+            localStorage.setItem('iptv_favorites', JSON.stringify(favorites));
+            updateFavoritesCategoryCount();
+        }
+        
+        function isFavorite(channelId) {
+            return getFavorites().includes(channelId);
+        }
+        
+        function toggleFavorite(channelId) {
+            let favorites = getFavorites();
+            const index = favorites.indexOf(channelId);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(channelId);
+            }
+            
+            saveFavorites(favorites);
+            return index === -1;
+        }
+        
+        function updateFavoritesCategoryCount() {
+            const favCount = getFavorites().length;
+            const favCatCount = document.querySelector('[data-cat="favorites"] .cat-count');
+            if (favCatCount) {
+                favCatCount.textContent = favCount;
+            }
+        }
+        
+        function getAllChannels() {
+            const allChannels = [];
+            categories.forEach(cat => {
+                cat.channels.forEach(ch => {
+                    allChannels.push({
+                        ...ch,
+                        category_name: cat.category.category_name
+                    });
+                });
+            });
+            return allChannels;
+        }
+        
+        function getFavoriteChannels() {
+            const favorites = getFavorites();
+            const allChannels = getAllChannels();
+            return allChannels.filter(ch => favorites.includes(ch.stream_id));
+        }
+        
+        function renderChannels(catId) {
+            const panel = document.getElementById("channels-panel");
+            panel.innerHTML = "";
+            
+            // Cas spécial: catégorie Favoris
+            if (catId === FAVORITES_CAT_ID) {
+                const favoriteChannels = getFavoriteChannels();
+                
+                if (favoriteChannels.length === 0) {
+                    panel.innerHTML = '<div class="loading">Aucun favori. Cliquez sur ⭐ pour ajouter des chaînes.</div>';
+                    currentChannels = [];
+                    return;
+                }
+                
+                currentChannels = favoriteChannels;
+                
+                favoriteChannels.forEach(ch => {
+                    const row = document.createElement("div");
+                    row.className = "channel-row";
+                    row.setAttribute('data-name', ch.name.toLowerCase());
+                    row.setAttribute('data-channel-id', ch.stream_id);
+                    
+                    row.innerHTML = `
+                        <span class="channel-name">
+                            ${ch.name}
+                            <span style="font-size: 11px; color: #888; margin-left: 8px; background: #2a2a2a; padding: 2px 8px; border-radius: 3px;">
+                                ${ch.category_name}
+                            </span>
+                        </span>
+                        <div style="display: flex; gap: 5px; align-items: center;">
+                            <button class='btn-favorite active' onclick='handleFavoriteClick(${ch.stream_id}, this)' title="Retirer des favoris">
+                                ⭐
+                            </button>
+                            <button class='btn-restream' onclick='setActiveStream(${ch.stream_id}, "${ch.name.replace(/'/g, "\\'")}",  this)' title="Diffuser sur /watch">📡 Diffuser</button>
+                            <button class='btn-restream' onclick='generateRestream(${ch.stream_id}, this)'>▶ Restream</button>
+                        </div>
+                    `;
+                    panel.appendChild(row);
+                });
+                return;
+            }
+            
+            // Catégories normales
+            const cat = categories.find(c => c.category.category_id == catId);
+            
+            if (!cat || !cat.channels.length) {
+                panel.innerHTML = '<div class="loading">Aucune chaîne dans cette catégorie.</div>';
+                currentChannels = [];
+                return;
+            }
+            
+            currentChannels = cat.channels;
+            cat.channels.forEach(ch => {
+                const row = document.createElement("div");
+                row.className = "channel-row";
+                row.setAttribute('data-name', ch.name.toLowerCase());
+                row.setAttribute('data-channel-id', ch.stream_id);
+                
+                const isFav = isFavorite(ch.stream_id);
+                
+                row.innerHTML = `
+                    <span class="channel-name">${ch.name}</span>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <button class='btn-favorite ${isFav ? "active" : ""}' onclick='handleFavoriteClick(${ch.stream_id}, this)' title="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                            ${isFav ? '⭐' : '☆'}
+                        </button>
+                        <button class='btn-restream' onclick='setActiveStream(${ch.stream_id}, "${ch.name.replace(/'/g, "\\'")}",  this)' title="Diffuser sur /watch">📡 Diffuser</button>
+                        <button class='btn-restream' onclick='generateRestream(${ch.stream_id}, this)'>▶ Restream</button>
+                    </div>
+                `;
+                panel.appendChild(row);
+            });
+        }
+        
+        function handleFavoriteClick(channelId, btn) {
+            const isNowFavorite = toggleFavorite(channelId);
+            
+            if (isNowFavorite) {
+                btn.textContent = '⭐';
+                btn.classList.add('active');
+                btn.title = 'Retirer des favoris';
+            } else {
+                btn.textContent = '☆';
+                btn.classList.remove('active');
+                btn.title = 'Ajouter aux favoris';
+                
+                if (selectedCat === FAVORITES_CAT_ID) {
+                    btn.closest('.channel-row').style.display = 'none';
+                }
+            }
+        }
+        
+        function filterCategories() {
+            const search = document.getElementById('search-cat').value.toLowerCase();
+            document.querySelectorAll('.cat-item').forEach(item => {
+                const catId = item.getAttribute('data-cat');
+                const name = item.getAttribute('data-name');
+                
+                // Toujours afficher la catégorie Favoris
+                if (catId === FAVORITES_CAT_ID) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = name.includes(search) ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        function filterChannels() {
+            const search = document.getElementById('search-channel').value.toLowerCase();
+            
+            document.querySelectorAll('.channel-row').forEach(row => {
+                const name = row.getAttribute('data-name');
+                row.style.display = name.includes(search) ? 'flex' : 'none';
+            });
+        }
+
+        function selectCategory(e) {
+            let item = e.target;
+            if (!item.classList.contains('cat-item')) {
+                item = item.closest('.cat-item');
+            }
+            if (!item) return;
+            
+            document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedCat = item.getAttribute('data-cat');
+            renderChannels(selectedCat);
+        }
+
+        function generateRestream(channelId, btn) {
+            btn.disabled = true;
+            btn.textContent = "Génération...";
+            
+            authFetch(api + "/generate_link", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ channel_id: channelId })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                console.log("Response data:", data);
+                btn.disabled = false;
+                btn.textContent = "▶ Restream";
+                
+                if (!data.restream_url) {
+                    throw new Error("Pas de restream_url dans la réponse");
+                }
+                
+                const streamUrl = api + data.restream_url;
+                currentStreamUrl = streamUrl;
+                
+                const linkText = document.getElementById("link-text");
+                linkText.textContent = streamUrl;
+                
+                // Afficher le container de lien
+                const linkContainer = document.getElementById("link-container");
+                linkContainer.style.display = "block";
+                linkContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(err => {
+                console.error("Erreur:", err);
+                btn.disabled = false;
+                btn.textContent = "▶ Restream";
+                alert("Erreur lors de la génération du lien: " + err.message);
+            });
+        }
+        
+        function copyLink() {
+            const linkText = document.getElementById("link-text").textContent;
+            navigator.clipboard.writeText(linkText).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = "✓ Copié !";
+                btn.style.background = "#218838";
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = "#28a745";
+                }, 2000);
+            });
+        }
+        
+        function openInVLC() {
+            // Copier automatiquement le lien
+            navigator.clipboard.writeText(currentStreamUrl);
+            
+            // Afficher les instructions
+            alert("📋 Lien copié dans le presse-papier !\n\n" +
+                  "Pour regarder dans VLC :\n" +
+                  "1. Ouvrez VLC Media Player\n" +
+                  "2. Média → Ouvrir un flux réseau (Ctrl+N)\n" +
+                  "3. Le lien est déjà copié, collez-le (Ctrl+V)\n" +
+                  "4. Cliquez sur Lire\n\n" +
+                  "Lien : " + currentStreamUrl);
+        }
+        
+        function closeLink() {
+            document.getElementById("link-container").style.display = "none";
+            currentStreamUrl = "";
+        }
+        
+        function setActiveStream(channelId, channelName, btn) {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "⏳ Démarrage...";
+            
+            authFetch(api + "/set_active_stream", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ channel_id: channelId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = "✓ En direct !";
+                btn.style.background = "#28a745";
+                
+                // Mettre à jour l'indicateur de stream
+                updateStreamStatus();
+                
+                // Afficher le lien /watch
+                alert(`✅ Stream démarré avec FFmpeg !\n\n` +
+                      `Chaîne: ${channelName}\n\n` +
+                      `📺 Regarder: http://127.0.0.1:8001/watch/\n` +
+                      `📡 Jellyfin/VLC: http://127.0.0.1:8002/live.m3u8\n\n` +
+                      `Le stream est maintenant accessible !`);
+                
+                // Réinitialiser après 3 secondes
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = "";
+                }, 3000);
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                alert("Erreur: " + err.message);
+            });
+        }
+        
+        function stopCurrentStream() {
+            if (!confirm("Voulez-vous vraiment arrêter le stream actif ?")) {
+                return;
+            }
+            
+            authFetch(api + "/stop_stream", {
+                method: "POST"
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("✅ " + data.message);
+                updateStreamStatus();
+            })
+            .catch(err => {
+                alert("Erreur: " + err.message);
+            });
+        }
+        
+        function updateStreamStatus() {
+            fetch(api + "/stream_status")
+                .then(res => res.json())
+                .then(data => {
+                    const statusDiv = document.getElementById("stream-status");
+                    const channelNameEl = document.getElementById("active-channel-name");
+                    
+                    if (data.active) {
+                        statusDiv.style.display = "block";
+                        channelNameEl.textContent = data.channel_name || "Stream actif";
+                    } else {
+                        statusDiv.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Erreur vérification status:", err));
+        }
+        
+        // Vérifier le statut au chargement et toutes les 5 secondes
+        updateStreamStatus();
+        setInterval(updateStreamStatus, 5000);
+
+        // Créer la catégorie Favoris dynamiquement
+        function initFavoritesCategory() {
+            const catList = document.getElementById('cat-list');
+            const favCount = getFavorites().length;
+            
+            const favCat = document.createElement('div');
+            favCat.className = 'cat-item selected';
+            favCat.setAttribute('data-cat', FAVORITES_CAT_ID);
+            favCat.setAttribute('data-name', 'favoris');
+            favCat.innerHTML = `
+                <span>⭐ Favoris</span>
+                <span class="cat-count">${favCount}</span>
+            `;
+            favCat.addEventListener('click', selectCategory);
+            
+            catList.insertBefore(favCat, catList.firstChild);
+        }
+
+        // Event listeners
+        document.querySelectorAll('.cat-item').forEach(item => {
+            item.addEventListener('click', selectCategory);
+        });
+
+        // Initialisation
+        initFavoritesCategory();
+        selectedCat = FAVORITES_CAT_ID;
+        renderChannels(selectedCat);
+    </script>
+</body>
+</html>

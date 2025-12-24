@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Déconnexion...</title>
+</head>
+<body>
+    <script>
+        // Supprimer tous les tokens
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('token_type');
+        
+        // Rediriger vers la page de login
+        window.location.href = '/login';
+    </script>
+</body>
+</html>

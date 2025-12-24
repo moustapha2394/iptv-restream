@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📺 Live TV</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+        }
+        #player-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .channel-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, rgba(46, 139, 255, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 20px;
+            z-index: 10;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .btn-play {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .btn-play:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(56, 239, 125, 0.4);
+        }
+        .btn-reload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-reload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+        .error-msg, .loading, .no-stream {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+        .error-msg { border: 2px solid #ff4444; }
+        .loading { border: 2px solid #2e8bff; }
+        .no-stream { border: 2px solid #ffa500; }
+        .icon { font-size: 60px; margin-bottom: 15px; }
+        h2 { margin-bottom: 15px; }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #2e8bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-link:hover {
+            background: #1c5db6;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div id="player-container">
+        <video id="player" controls></video>
+        
+        <div id="channel-info" class="channel-info" style="display:none;">
+            <span id="channel-name">📺 Live TV</span>
+        </div>
+        
+        <div class="controls" id="controls" style="display:none;">
+            <button class="btn btn-play" onclick="startPlayback()">▶ Lire</button>
+            <button class="btn btn-reload" onclick="location.reload()">🔄 Recharger</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="icon">⏳</div>
+            <h2>Chargement du stream...</h2>
+            <p>Veuillez patienter</p>
+        </div>
+        
+        <div id="no-stream" class="no-stream" style="display:none;">
+            <div class="icon">📺</div>
+            <h2>Aucun stream actif</h2>
+            <p>Aucune chaîne n'est actuellement diffusée.<br>Retournez à la plateforme pour démarrer un stream.</p>
+            <a href="/" class="back-link">← Retour à la plateforme</a>
+        </div>
+        
+        <div id="error" class="error-msg" style="display:none;">
+            <div class="icon">❌</div>
+            <h2>Erreur de lecture</h2>
+            <p id="error-text"></p>
+            <button class="btn btn-reload" onclick="location.reload()" style="margin-top: 20px;">🔄 Réessayer</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('player');
+        const loading = document.getElementById('loading');
+        const noStream = document.getElementById('no-stream');
+        const errorDiv = document.getElementById('error');
+        const errorText = document.getElementById('error-text');
+        const channelInfo = document.getElementById('channel-info');
+        const channelName = document.getElementById('channel-name');
+        const controls = document.getElementById('controls');
+        let hls = null;
+        let streamReady = false;
+        let currentChannelId = null;
+        let checkInterval = null;
+        
+        // Vérifier le statut du stream
+        fetch('http://127.0.0.1:8002/stream_status')
+            .then(res => res.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (!data.active) {
+                    noStream.style.display = 'block';
+                    return;
+                }
+                
+                currentChannelId = data.channel_id;
+                channelName.textContent = '📺 ' + (data.channel_name || 'Live TV');
+                channelInfo.style.display = 'block';
+                controls.style.display = 'flex';
+                streamReady = true;
+                
+                // Démarrer la surveillance des changements de chaîne
+                startChannelMonitoring();
+                
+                // Attendre que FFmpeg génère suffisamment de segments
+                setTimeout(() => {
+                    startPlayback();
+                }, 6000);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                showError('Impossible de se connecter au serveur');
+            });
+        
+        // Surveiller les changements de chaîne
+        function startChannelMonitoring() {
+            checkInterval = setInterval(() => {
+                fetch('http://127.0.0.1:8002/stream_status')
+                    .then(res => res.json())
+                    .then(data => {
+                        // Si la chaîne a changé ou le stream s'est arrêté
+                        if (!data.active) {
+                            // Stream arrêté, rediriger vers l'admin
+                            if (checkInterval) clearInterval(checkInterval);
+                            window.location.href = 'http://127.0.0.1:8001';
+                        } else if (data.channel_id !== currentChannelId) {
+                            // Changement de chaîne détecté, recharger la page
+                            console.log('Changement de chaîne détecté:', currentChannelId, '→', data.channel_id);
+                            location.reload();
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Erreur monitoring:', err);
+                    });
+            }, 2000); // Vérifier toutes les 2 secondes
+        }
+        
+        function startPlayback() {
+            if (!streamReady) {
+                showError('Stream non prêt, veuillez réessayer');
+                return;
+            }
+            
+            controls.style.display = 'none';
+            
+            const streamUrl = 'http://127.0.0.1:8002/internal_stream.m3u8';
+            
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: false,
+                    maxBufferLength: 60,  // Buffer de 60 secondes
+                    maxMaxBufferLength: 120,  // Max 2 minutes
+                    maxBufferSize: 120 * 1000 * 1000,  // 120 MB
+                    maxBufferHole: 1.0,  // Tolérance aux trous
+                    manifestLoadingTimeOut: 20000,  // Timeout playlist 20s
+                    manifestLoadingMaxRetry: 10,  // Plus de réessais
+                    levelLoadingTimeOut: 20000,
+                    fragLoadingTimeOut: 30000,  // Timeout segments 30s
+                    liveSyncDuration: 8,  // Sync plus longue
+                    liveMaxLatencyDuration: 20  // Plus de latence tolérée
+                });
+                
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(err => {
+                        console.error('Play error:', err);
+                        controls.style.display = 'flex';
+                    });
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    console.error('HLS error:', data);
+                    if (data.fatal) {
+                        switch(data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('Récupération réseau...');
+                                setTimeout(() => hls.startLoad(), 1000);
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('Récupération média...');
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.log('Erreur, rechargement stream...');
+                                hls.destroy();
+                                setTimeout(() => startPlayback(), 2000);
+                                break;
+                        }
+                    } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                        // Erreurs non-fatales : retry silencieux
+                        console.log('Erreur réseau non-fatale, retry...');
+                        setTimeout(() => hls.startLoad(), 500);
+                    }
+                });
+            } 
+            // Safari natif
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = streamUrl;
+                video.addEventListener('loadedmetadata', () => {
+                    video.play().catch(err => {
+                        console.error('Play error:', err);
+                        controls.style.display = 'flex';
+                    });
+                });
+            } 
+            else {
+                showError('Votre navigateur ne supporte pas HLS. Utilisez Chrome, Firefox ou Safari.');
+            }
+        }
+        
+        function showError(msg) {
+            errorDiv.style.display = 'block';
+            errorText.textContent = msg;
+            channelInfo.style.display = 'none';
+            controls.style.display = 'none';
+        }
+        
+        // Nettoyer à la fermeture
+        window.addEventListener('beforeunload', () => {
+            if (checkInterval) clearInterval(checkInterval);
+            if (hls) hls.destroy();
+        });
+    </script>
+</body>
+</html>
