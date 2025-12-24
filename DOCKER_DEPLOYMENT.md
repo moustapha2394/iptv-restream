@@ -76,7 +76,7 @@ docker-compose logs -f
 ### Identifiants par défaut
 
 - **Username** : `admin`
-- **Password** : `admin123` (changez-le en production !)
+- **Password** : Le mot de passe par défaut est configuré dans docker-compose.yml (changez-le en production !)
 
 ## 🛠️ Commandes utiles
 

@@ -206,7 +206,7 @@ def root():
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Route de connexion - retourne un token JWT
-    Credentials par défaut: admin / admin123
+    Credentials configurés dans docker-compose.yml (voir ADMIN_PASSWORD_HASH)
     """
     user = authenticate_user(form_data.username, form_data.password)
     if not user:

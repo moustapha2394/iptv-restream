@@ -43,7 +43,7 @@ Documentation interactive : http://localhost:8000/docs
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
-| `XTREAM_URL` | URL du serveur Xtream | http://line.dino.ws:80 |
+| `XTREAM_URL` | URL du serveur Xtream | http://your-server.com:port |
 | `XTREAM_USER` | Nom d'utilisateur Xtream | - |
 | `XTREAM_PASS` | Mot de passe Xtream | - |
 

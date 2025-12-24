@@ -44,7 +44,7 @@ docker compose logs -f
 
 - **Frontend (interface web)** : http://IP_PROXMOX:8001
 - **Backend (API)** : http://IP_PROXMOX:8002
-- **Login** : admin / admin123
+- **Login** : admin / (voir docker-compose.yml pour le mot de passe)
 
 ---
 

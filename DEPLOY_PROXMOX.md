@@ -157,7 +157,7 @@ http://IP_CONTAINER:8001/login  # Page de connexion
 http://IP_CONTAINER:8002/docs   # Documentation API
 ```
 
-**Identifiants par défaut** : `admin` / `admin123`
+**Identifiants par défaut** : Voir `docker-compose.yml` pour les credentials
 
 ## 🔐 Étape 8 : Configuration Cloudflare (Optionnel)
 
@@ -397,7 +397,7 @@ docker compose exec backend env | grep -E 'ADMIN|JWT'
 # Tester le login via curl
 curl -X POST http://localhost:8002/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=admin123"
+  -d "username=admin&password=YOUR_PASSWORD"
 ```
 
 ## 📊 Monitoring
@@ -435,7 +435,7 @@ Votre plateforme IPTV Restream est maintenant déployée et accessible :
 - 🌐 **Interface Admin** : https://restream.votredomaine.com
 - 📺 **Page de visionnage** : https://watch.votredomaine.com
 
-**Identifiants** : `admin` / `admin123` (à changer en production)
+**Identifiants** : Configurés dans `docker-compose.yml` (à changer en production)
 
 ---
 

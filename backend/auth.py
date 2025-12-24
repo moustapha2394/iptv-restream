@@ -112,8 +112,13 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 # Fonction utilitaire pour générer un nouveau hash de mot de passe
 if __name__ == "__main__":
-    # Pour générer un nouveau hash de mot de passe
-    password = "admin123"
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python auth.py <votre_mot_de_passe>")
+        sys.exit(1)
+    
+    password = sys.argv[1]
     hashed = get_password_hash(password)
-    print(f"Mot de passe: {password}")
-    print(f"Hash: {hashed}")
+    print(f"Hash bcrypt pour '{password}':")
+    print(hashed)
+    print("\nCopiez ce hash dans docker-compose.yml -> ADMIN_PASSWORD_HASH")

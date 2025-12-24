@@ -58,7 +58,7 @@ environment:
 
 ### Changer le mot de passe admin
 
-Par défaut : `admin` / `admin123`
+Par défaut : Configuré dans `docker-compose.yml` (le hash bcrypt correspond à un mot de passe que vous devez changer)
 
 Pour changer :
 
