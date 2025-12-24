@@ -394,6 +394,12 @@ async def proxy_stream():
         raise HTTPException(404, "Aucun stream actif")
     return RedirectResponse(url="/internal_stream.m3u8")
 
+@app.on_event("startup")
+def startup_event():
+    """Initialise le cache IPTV au démarrage de l'application"""
+    print("Initialisation du cache IPTV...")
+    refresh_cache()
+
 @app.on_event("shutdown")
 def shutdown_event():
     """Nettoie les ressources au shutdown"""
