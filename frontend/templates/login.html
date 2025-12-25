@@ -117,10 +117,9 @@
     </div>
 
     <script>
-        // Détection automatique de l'URL du backend
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:8002`
-            : 'https://api.senbaye.me';
+        // Détection automatique du backend
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = isLocal ? 'http://127.0.0.1:8002' : 'https://api.senbaye.me';
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();

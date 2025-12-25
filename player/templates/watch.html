@@ -133,8 +133,7 @@
         <div id="no-stream" class="no-stream" style="display:none;">
             <div class="icon">📺</div>
             <h2>Aucun stream actif</h2>
-            <p>Aucune chaîne n'est actuellement diffusée.<br>Retournez à la plateforme pour démarrer un stream.</p>
-            <a href="/" class="back-link">← Retour à la plateforme</a>
+            <p>Aucune chaîne n'est actuellement diffusée.</p>
         </div>
         
         <div id="error" class="error-msg" style="display:none;">
@@ -146,8 +145,9 @@
     </div>
 
     <script>
-        // Backend en interne sur le même serveur Docker
-        const API_URL = `http://${window.location.hostname}:8002`;
+        // Détection automatique du backend
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = isLocal ? 'http://127.0.0.1:8002' : 'https://api.senbaye.me';
         
         const video = document.getElementById('player');
         const loading = document.getElementById('loading');
@@ -200,9 +200,10 @@
                     .then(data => {
                         // Si la chaîne a changé ou le stream s'est arrêté
                         if (!data.active) {
-                            // Stream arrêté, rediriger vers l'admin
+                            // Stream arrêté
                             if (checkInterval) clearInterval(checkInterval);
-                            window.location.href = `http://${window.location.hostname}:8001`;
+                            noStream.style.display = 'block';
+                            video.pause();
                         } else if (data.channel_id !== currentChannelId) {
                             // Changement de chaîne détecté, recharger la page
                             console.log('Changement de chaîne détecté:', currentChannelId, '→', data.channel_id);
@@ -229,16 +230,16 @@
                 hls = new Hls({
                     enableWorker: true,
                     lowLatencyMode: false,
-                    maxBufferLength: 60,  // Buffer de 60 secondes
-                    maxMaxBufferLength: 120,  // Max 2 minutes
-                    maxBufferSize: 120 * 1000 * 1000,  // 120 MB
-                    maxBufferHole: 1.0,  // Tolérance aux trous
-                    manifestLoadingTimeOut: 20000,  // Timeout playlist 20s
-                    manifestLoadingMaxRetry: 10,  // Plus de réessais
+                    maxBufferLength: 60,
+                    maxMaxBufferLength: 120,
+                    maxBufferSize: 120 * 1000 * 1000,
+                    maxBufferHole: 1.0,
+                    manifestLoadingTimeOut: 20000,
+                    manifestLoadingMaxRetry: 10,
                     levelLoadingTimeOut: 20000,
-                    fragLoadingTimeOut: 30000,  // Timeout segments 30s
-                    liveSyncDuration: 8,  // Sync plus longue
-                    liveMaxLatencyDuration: 20  // Plus de latence tolérée
+                    fragLoadingTimeOut: 30000,
+                    liveSyncDuration: 8,
+                    liveMaxLatencyDuration: 20
                 });
                 
                 hls.loadSource(streamUrl);
@@ -270,7 +271,6 @@
                                 break;
                         }
                     } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                        // Erreurs non-fatales : retry silencieux
                         console.log('Erreur réseau non-fatale, retry...');
                         setTimeout(() => hls.startLoad(), 500);
                     }

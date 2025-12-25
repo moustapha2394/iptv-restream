@@ -57,10 +57,6 @@ def home(request):
     
     return response
 
-def watch(request):
-    """Page de lecture du stream actif - PUBLIQUE"""
-    return render(request, "watch.html")
-
 def logout(request):
     """Déconnexion - supprime le token"""
     # Rendre la page de logout qui va supprimer le localStorage

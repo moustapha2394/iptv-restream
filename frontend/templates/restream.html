@@ -34,10 +34,9 @@
         <div id="restream-link" class="link-box" style="display:none;"></div>
     </div>
     <script>
-        // Détection automatique de l'URL du backend
-        const api = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:8002`
-            : 'https://api.senbaye.me';
+        // Détection automatique du backend
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const api = isLocal ? 'http://127.0.0.1:8002' : 'https://api.senbaye.me';
         function getToken() {
             return document.getElementById("token").value;
         }

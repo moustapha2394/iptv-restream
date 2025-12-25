@@ -117,10 +117,9 @@
     </div>
 
     <script>
-        // Détection automatique de l'URL du backend
-        const api = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:8002`
-            : 'https://api.senbaye.me';
+        // Détection automatique du backend
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const api = isLocal ? 'http://127.0.0.1:8002' : 'https://api.senbaye.me';
         const categories = {{ categories_json|safe }};
         const FAVORITES_CAT_ID = 'favorites';
         let selectedCat = null;
@@ -454,11 +453,13 @@
                 // Mettre à jour l'indicateur de stream
                 updateStreamStatus();
                 
-                // Afficher le lien /watch
+                // Afficher le lien /watch - Player sur port 8003
+                const watchUrl = isLocal ? `http://${window.location.hostname}:8003/` : `https://restream.senbaye.me/`;
+                const streamUrl = isLocal ? `http://${window.location.hostname}:8002/live.m3u8` : `https://api.senbaye.me/live.m3u8`;
                 alert(`✅ Stream démarré avec FFmpeg !\n\n` +
                       `Chaîne: ${channelName}\n\n` +
-                      `📺 Regarder: http://${window.location.hostname}:8001/watch/\n` +
-                      `📡 Jellyfin/VLC: http://${window.location.hostname}:8002/live.m3u8\n\n` +
+                      `📺 Regarder: ${watchUrl}\n` +
+                      `📡 Jellyfin/VLC: ${streamUrl}\n\n` +
                       `Le stream est maintenant accessible !`);
                 
                 // Réinitialiser après 3 secondes

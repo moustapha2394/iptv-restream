@@ -62,3 +62,21 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
+
+      - name: Extract metadata for player
+        id: meta-player
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/player
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push player image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./player
+          push: true
+          tags: ${{ steps.meta-player.outputs.tags }}
+          labels: ${{ steps.meta-player.outputs.labels }}

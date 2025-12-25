@@ -16,12 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from restream.views import home, watch, login_page, logout
+from restream.views import home, login_page, logout
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
-    path('watch/', watch, name='watch'),
     path('login/', login_page, name='login'),
     path('logout/', logout, name='logout'),
 ]

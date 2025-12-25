@@ -49,6 +49,24 @@ services:
     networks:
       - iptv_network
 
+  player:
+    # Option 1: Build local (développement)
+    build: ./player
+    
+    # Option 2: Pull depuis GitHub Container Registry (production)
+    # image: ghcr.io/moustapha2394/iptv-restream/player:main
+    
+    container_name: iptv_player
+    ports:
+      - "8003:8003"
+    environment:
+      - BACKEND_URL=http://backend:8002
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - iptv_network
+
 networks:
   iptv_network:
     driver: bridge
