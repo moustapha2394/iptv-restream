@@ -117,8 +117,10 @@
     </div>
 
     <script>
-        // Détection automatique de l'hôte (127.0.0.1 en local, 192.168.1.12 sur Proxmox)
-        const api = `http://${window.location.hostname}:8002`;
+        // Détection automatique de l'URL du backend
+        const api = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `http://${window.location.hostname}:8002`
+            : 'https://api.senbaye.me';
         const categories = {{ categories_json|safe }};
         const FAVORITES_CAT_ID = 'favorites';
         let selectedCat = null;

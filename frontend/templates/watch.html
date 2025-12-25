@@ -146,6 +146,11 @@
     </div>
 
     <script>
+        // Détection automatique de l'URL du backend
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `http://${window.location.hostname}:8002`
+            : 'https://api.senbaye.me';
+        
         const video = document.getElementById('player');
         const loading = document.getElementById('loading');
         const noStream = document.getElementById('no-stream');
@@ -160,7 +165,7 @@
         let checkInterval = null;
         
         // Vérifier le statut du stream
-        fetch(`http://${window.location.hostname}:8002/stream_status`)
+        fetch(`${API_URL}/stream_status`)
             .then(res => res.json())
             .then(data => {
                 loading.style.display = 'none';
@@ -192,7 +197,7 @@
         // Surveiller les changements de chaîne
         function startChannelMonitoring() {
             checkInterval = setInterval(() => {
-                fetch(`http://${window.location.hostname}:8002/stream_status`)
+                fetch(`${API_URL}/stream_status`)
                     .then(res => res.json())
                     .then(data => {
                         // Si la chaîne a changé ou le stream s'est arrêté
