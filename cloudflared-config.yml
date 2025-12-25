@@ -1,0 +1,30 @@
+tunnel: 2f2c9539-9d34-4b79-a9c1-2cb0c4477c3d
+credentials-file: /root/.cloudflared/2f2c9539-9d34-4b79-a9c1-2cb0c4477c3d.json
+
+ingress:
+  # Backend API - api.senbaye.me
+  - hostname: api.senbaye.me
+    service: http://192.168.1.88:8002
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      httpHostHeader: api.senbaye.me
+
+  # Player Frontend - restream.senbaye.me
+  - hostname: restream.senbaye.me
+    service: http://192.168.1.88:8003
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      httpHostHeader: restream.senbaye.me
+
+  # Admin Frontend - admin.senbaye.me
+  - hostname: admin.senbaye.me
+    service: http://192.168.1.88:8001
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      httpHostHeader: admin.senbaye.me
+
+  # Catch-all rule (required)
+  - service: http_status:404
