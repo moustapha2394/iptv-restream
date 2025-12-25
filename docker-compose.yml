@@ -12,13 +12,13 @@ services:
     environment:
       # ========== XTREAM CODES API - CONFIGURATION OBLIGATOIRE ==========
       # URL de votre serveur Xtream (exemple: http://votre-serveur.com:8080)
-      - XTREAM_API_URL=http://your-xtream-server.com:port
+      - XTREAM_API_URL=http://line.dino.ws:80
       
       # Nom d'utilisateur Xtream (obtenu depuis votre fournisseur IPTV)
-      - XTREAM_USERNAME=your_xtream_username
+      - XTREAM_USERNAME=8c8e6d773d
       
       # Mot de passe Xtream (obtenu depuis votre fournisseur IPTV)
-      - XTREAM_PASSWORD=your_xtream_password
+      - XTREAM_PASSWORD=2ff8d53b8f8c
       
       # ========== SÉCURITÉ JWT - À MODIFIER EN PRODUCTION ==========
       # Clé secrète JWT - Générer avec: openssl rand -hex 32
@@ -51,10 +51,10 @@ services:
 
   player:
     # Option 1: Build local (développement)
-    build: ./player
+    # build: ./player
     
     # Option 2: Pull depuis GitHub Container Registry (production)
-    # image: ghcr.io/moustapha2394/iptv-restream/player:main
+    image: ghcr.io/moustapha2394/iptv-restream/player:main
     
     container_name: iptv_player
     ports:

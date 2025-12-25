@@ -28,8 +28,16 @@
     </div>
     <script>
         // Détection automatique du backend
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const api = isLocal ? 'http://127.0.0.1:8002' : 'https://api.senbaye.me';
+        function isLocalNetwork() {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+            if (hostname.startsWith('192.168.')) return true;
+            if (hostname.startsWith('10.')) return true;
+            if (hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) return true;
+            return false;
+        }
+        const isLocal = isLocalNetwork();
+        const api = isLocal ? `http://${window.location.hostname}:8002` : 'https://api.senbaye.me';
         console.log('Backend API URL:', api);
         
         function getToken() {
